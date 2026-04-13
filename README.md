@@ -18,12 +18,12 @@ A high-performance JavaScript typography engine that allows text to fluidly wrap
     <canvas id="my-canvas"></canvas>
 </div>
 
-2. Import the script:
+**2. Import the script:**
 
 HTML
 <script src="path/to/EditorialCanvasV3.js"></script>
 
-3. Initialize the engine:
+**3. Initialize the engine:**
 
 JavaScript
 const engine = new EditorialCanvasV3('my-canvas', {
