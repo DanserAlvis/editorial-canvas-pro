@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EditorialCanvas PRO - Enterprise Edition</title>
+    <style>
+        /* =========================================
+           VARIABLES Y DISEÑO BASE (DARK MODE MODERNO)
+           ========================================= */
+        :root {
+            --bg-page: #020617;      /* Slate 950 */
+            --bg-panel: #0f172a;     /* Slate 900 */
+            --bg-canvas: #ffffff;    
+            --text-main: #f8fafc;    /* Slate 50 */
+            --text-muted: #94a3b8;   /* Slate 400 */
+            --accent: #6366f1;       /* Indigo 500 */
+            --accent-hover: #4f46e5; /* Indigo 600 */
+            --border: #1e293b;       /* Slate 800 */
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            margin: 0; padding: 0; line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- HERO HEADER --- */
+        header {
+            text-align: center; padding: 4rem 1rem 3rem; 
+            background: radial-gradient(circle at 50% -20%, #1e293b, #020617);
+            border-bottom: 1px solid var(--border);
+        }
+        header h1 { 
+            font-size: 3.5rem; margin: 0 0 1rem 0; letter-spacing: -1px;
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
+        header p { color: var(--text-muted); font-size: 1.2rem; max-width: 700px; margin: 0 auto; }
+        
+        .badges { margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; }
+        .badge { background: rgba(99, 102, 241, 0.1); color: #818cf8; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.2); }
+
+        /* --- LAYOUT PRINCIPAL (PLAYGROUND) --- */
+        .playground {
+            display: grid; grid-template-columns: 380px 1fr; gap: 2rem;
+            padding: 2rem; max-width: 1600px; margin: 0 auto;
+        }
+        @media (max-width: 1100px) { .playground { grid-template-columns: 1fr; } }
+
+        /* --- PANEL LATERAL --- */
+        .panel {
+            background: var(--bg-panel); padding: 1.5rem; border-radius: 16px;
+            border: 1px solid var(--border); height: fit-content;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+        }
+        .panel-section { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+        .panel-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .panel h3 { margin: 0 0 1rem 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Controles UI */
+        .tabs { display: flex; gap: 0.5rem; background: #020617; padding: 0.3rem; border-radius: 8px; border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 0.6rem 0; border: none; background: transparent; color: var(--text-muted); border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+        .tab-btn.activo { background: var(--accent); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .control-group { margin-bottom: 1rem; }
+        .control-group label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 500; }
+        .control-group span.val { color: #818cf8; font-family: monospace; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: grab; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        input[type="color"] { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: 6px; background: #020617; cursor: pointer; padding: 2px;}
+        
+        textarea { width: 100%; height: 120px; background: #020617; color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; font-family: inherit; resize: vertical; line-height: 1.5; }
+        textarea:focus { outline: 2px solid var(--accent); border-color: transparent;}
+
+        .btn-toggle { width: 100%; padding: 0.8rem; background: #1e293b; border: 1px solid var(--border); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .btn-toggle.active { background: rgba(99, 102, 241, 0.15); border-color: var(--accent); color: #818cf8; }
+        .toggle-indicator { width: 12px; height: 12px; border-radius: 50%; background: var(--border); transition: 0.3s; }
+        .btn-toggle.active .toggle-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+        .btn-upload { display: block; width: 100%; text-align: center; background: rgba(255,255,255,0.05); color: white; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; border: 1px dashed var(--text-muted); transition: all 0.2s; margin-top: 0.5rem; }
+        .btn-upload:hover { background: rgba(255,255,255,0.1); border-color: var(--accent); }
+        input[type="file"] { display: none; }
+
+        /* --- VISUALIZADOR --- */
+        .preview-area { display: flex; flex-direction: column; gap: 1.5rem; }
+        .canvas-wrapper {
+            background: var(--bg-canvas); border-radius: 16px; overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); height: 600px; position: relative;
+            border: 1px solid var(--border);
+        }
+        .canvas-wrapper[data-modo="arrastrar"] { cursor: grab; }
+        .canvas-wrapper[data-modo="arrastrar"]:active { cursor: grabbing; }
+        .canvas-wrapper[data-modo="seguir"] { cursor: crosshair; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .fps-badge { position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: var(--success); padding: 0.4rem 0.8rem; border-radius: 20px; font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: bold; backdrop-filter: blur(4px); }
+
+        /* --- GENERADOR DE CÓDIGO --- */
+        .code-box { background: #000000; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-top: 1rem;}
+        .code-header { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 0.6rem 1.2rem; border-bottom: 1px solid var(--border); }
+        .code-header span { font-size: 0.85rem; color: #cbd5e1; font-family: monospace; font-weight: bold;}
+        .btn-copy { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; transition: 0.2s; }
+        .btn-copy:hover { background: var(--accent-hover); }
+        pre { margin: 0; padding: 1.5rem; overflow-x: auto; color: #a6accd; font-size: 0.9rem; font-family: 'Fira Code', monospace; line-height: 1.5; }
+        .t-kw { color: #cba6f7; } .t-str { color: #a6e3a1; } .t-num { color: #fab387; } .t-func { color: #89b4fa; } .t-com { color: #6c7086; font-style: italic; } .t-bool { color: #f38ba8; }
+
+        /* --- DOCUMENTACIÓN --- */
+        .docs { max-width: 1200px; margin: 4rem auto 6rem; padding: 0 2rem; }
+        .docs h2 { border-bottom: 1px solid var(--border); padding-bottom: 1rem; color: #fff; font-size: 2rem; margin-bottom: 2rem;}
+        .step { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+        .step h3 { color: #818cf8; margin-top: 0; display: flex; align-items: center; gap: 1rem; }
+        .step-num { background: rgba(99, 102, 241, 0.2); color: #818cf8; width: 30px; height: 30px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 1rem; }
+        .step p { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>EditorialCanvas PRO</h1>
+        <p>El motor de renderizado tipográfico más avanzado para la web. Evita el "Layout Thrashing", envuelve imágenes complejas con huecos internos y justifica texto matemáticamente a 60 FPS.</p>
+        <div class="badges">
+            <span class="badge">🚀 Cero Dependencias</span>
+            <span class="badge">⚡ Renderizado GPU</span>
+            <span class="badge">🧩 Soporte Canal Alfa</span>
+        </div>
+    </header>
+
+    <main class="playground">
+        
+        <aside class="panel">
+            
+            <div class="panel-section">
+                <h3>1. Motor Físico y Forma</h3>
+                <div class="control-group">
+                    <div class="tabs" id="tabs-forma">
+                        <button class="tab-btn activo" data-forma="circulo">Círculo</button>
+                        <button class="tab-btn" data-forma="dona">Dona (Hueco)</button>
+                        <button class="tab-btn" data-forma="imagen">Custom PNG</button>
+                    </div>
+                    <div id="panel-upload" style="display: none;">
+                        <label class="btn-upload" for="file-upload">📁 Subir Imagen (PNG)</label>
+                        <input type="file" id="file-upload" accept="image/png">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="tabs" id="tabs-modo">
+                        <button class="tab-btn activo" data-modo="arrastrar">Arrastrar</button>
+                        <button class="tab-btn" data-modo="seguir">Seguir Ratón</button>
+                        <button class="tab-btn" data-modo="auto">Rebote Auto</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>2. Geometría</h3>
+                <div class="control-group">
+                    <label>Escala del Objeto <span class="val" id="val-r">120px</span></label>
+                    <input type="range" id="ctrl-r" min="50" max="300" value="120">
+                </div>
+                <div class="control-group">
+                    <label>Margen de Repulsión (Padding) <span class="val" id="val-m">20px</span></label>
+                    <input type="range" id="ctrl-m" min="0" max="80" value="20">
+                </div>
+                <div class="control-group">
+                    <label>Padding del Lienzo <span class="val" id="val-pad">50px</span></label>
+                    <input type="range" id="ctrl-pad" min="0" max="100" value="50">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>3. Tipografía y Estilos</h3>
+                <div class="control-group">
+                    <button class="btn-toggle active" id="btn-justify">
+                        Justificación Matemática <span class="toggle-indicator"></span>
+                    </button>
+                </div>
+                <div class="control-group">
+                    <label>Line Height <span class="val" id="val-l">28px</span></label>
+                    <input type="range" id="ctrl-l" min="16" max="50" value="28">
+                </div>
+                
+                <div class="control-group grid-2">
+                    <div>
+                        <label>Color Texto</label>
+                        <input type="color" id="ctrl-color-txt" value="#1e293b">
+                    </div>
+                    <div id="wrapper-color-obj">
+                        <label>Color Objeto</label>
+                        <input type="color" id="ctrl-color-obj" value="#6366f1">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Fondo Canvas</label>
+                    <input type="color" id="ctrl-color-bg" value="#f8fafc">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>4. Contenido</h3>
+                <div class="control-group">
+                    <textarea id="ctrl-texto">El sistema de enrutamiento de texto ha sido reconstruido. Anteriormente, un error en la lógica causaba que las palabras se apilaran en el margen izquierdo al colisionar. Ahora, el motor utiliza un algoritmo basado en "Chunks" (fragmentos). Cuando una línea choca con un obstáculo, el motor dibuja el fragmento acumulado, justifica los espacios para que el texto toque el obstáculo, y traslada el cursor de forma segura al lado opuesto. Esto permite que el texto abrace limpiamente cualquier forma compleja, incluyendo huecos internos (como la Dona de arriba), manteniéndose fluido y sin superposiciones a 60 FPS.</textarea>
+                </div>
+            </div>
+        </aside>
+
+        <section class="preview-area">
+            
+            <div class="canvas-wrapper" id="wrapper" data-modo="arrastrar">
+                <canvas id="lienzo-demo"></canvas>
+                <div class="fps-badge" id="fps-monitor">60 FPS</div>
+            </div>
+
+            <div class="code-box">
+                <div class="code-header">
+                    <span>⚡ Código Generado (Tu Configuración Actual)</span>
+                    <button class="btn-copy" id="btn-copiar-cfg">Copiar Configuración</button>
+                </div>
+                <pre><code id="codigo-salida"></code></pre>
+            </div>
+
+        </section>
+    </main>
+
+    <section class="docs">
+        <h2>Guía Rápida de Instalación (3 Pasos)</h2>
+        
+        <div class="step">
+            <h3><span class="step-num">1</span> El Contenedor HTML</h3>
+            <p>El motor es agnóstico al framework (funciona en React, Vue, o Vanilla). Solo necesita un Canvas dentro de un contenedor con dimensiones definidas.</p>
+            <div class="code-box">
+<pre><code><span class="t-com">&lt;!-- El canvas tomará el 100% del width/height de este contenedor --&gt;</span>
+&lt;div id="mi-contenedor" style="width: 100%; height: 800px;"&gt;
+    &lt;canvas id="mi-lienzo"&gt;&lt;/canvas&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3><span class="step-num">2</span> El Motor (Core Class V3)</h3>
+            <p>Este es el cerebro del renderizado. Contiene el caché de memoria, el escáner de canal alfa y el algoritmo de "Chunks" para la justificación. Cópialo en tu archivo JS principal.</p>
+            <div class="code-box">
+                <div class="code-header">
+                    <span>Librería: EditorialCanvasV3</span>
+                    <button class="btn-copy" onclick="copiarLibreria(this)">Copiar Core</button>
+                </div>
+<pre><code id="codigo-libreria"><span class="t-kw">class</span> <span class="t-func">EditorialCanvasV3</span> {
+    <span class="t-func">constructor</span>(canvasId, opciones) {
+        <span class="t-kw">this</span>.canvas = document.getElementById(canvasId);
+        <span class="t-kw">this</span>.ctx = <span class="t-kw">this</span>.canvas.getContext(<span class="t-str">'2d'</span>, { alpha: <span class="t-bool">false</span> }); 
+        <span class="t-kw">this</span>.config = { ...opciones };
+        <span class="t-kw">this</span>.palabras = [];
+        <span class="t-kw">this</span>.wordCache = <span class="t-kw">new</span> Map();
+        <span class="t-kw">this</span>.imagenCargada = <span class="t-bool">false</span>;
+        <span class="t-kw">this</span>.imagenObj = <span class="t-kw">new</span> Image();
+        <span class="t-kw">this</span>.mapaSegmentos = []; 
+        <span class="t-kw">this</span>.prepararTexto();
+        <span class="t-kw">if</span>(<span class="t-kw">this</span>.config.imgSrc) <span class="t-kw">this</span>.cargarImagen(<span class="t-kw">this</span>.config.imgSrc);
+        <span class="t-kw">this</span>.resizeTimer = <span class="t-kw">null</span>;
+        window.addEventListener(<span class="t-str">'resize'</span>, () => {
+            clearTimeout(<span class="t-kw">this</span>.resizeTimer);
+            <span class="t-kw">this</span>.resizeTimer = setTimeout(() => <span class="t-kw">this</span>.ajustarResolucion(), <span class="t-num">100</span>);
+        });
+        <span class="t-kw">this</span>.ajustarResolucion();
+    }
+
+    <span class="t-func">prepararTexto</span>() {
+        <span class="t-kw">this</span>.ctx.font = <span class="t-kw">this</span>.config.fuente;
+        <span class="t-kw">const</span> rawWords = <span class="t-kw">this</span>.config.texto.split(/\s+/).filter(p => p.length > <span class="t-num">0</span>);
+        <span class="t-kw">this</span>.palabras = [];
+        rawWords.forEach(word => {
+            <span class="t-kw">if</span> (!<span class="t-kw">this</span>.wordCache.has(word)) <span class="t-kw">this</span>.wordCache.set(word, <span class="t-kw">this</span>.ctx.measureText(word).width);
+            <span class="t-kw">this</span>.palabras.push({ texto: word, ancho: <span class="t-kw">this</span>.wordCache.get(word) });
+        });
+        <span class="t-kw">this</span>.anchoEspacio = <span class="t-kw">this</span>.ctx.measureText(<span class="t-str">" "</span>).width;
+    }
+
+    <span class="t-func">actualizarConfig</span>(nuevasOpciones) {
+        <span class="t-kw">let</span> recargarImg = nuevasOpciones.imgSrc && nuevasOpciones.imgSrc !== <span class="t-kw">this</span>.config.imgSrc;
+        <span class="t-kw">let</span> recalcularMapa = recargarImg || nuevasOpciones.exclusionRadio !== <span class="t-kw">undefined</span>;
+        <span class="t-kw">let</span> recalcularTexto = nuevasOpciones.texto !== <span class="t-kw">undefined</span> || nuevasOpciones.fuente !== <span class="t-kw">undefined</span>;
+        <span class="t-kw">this</span>.config = { ...<span class="t-kw">this</span>.config, ...nuevasOpciones };
+        <span class="t-kw">if</span> (recalcularTexto) <span class="t-kw">this</span>.prepararTexto();
+        <span class="t-kw">if</span> (recargarImg) <span class="t-kw">this</span>.cargarImagen(<span class="t-kw">this</span>.config.imgSrc);
+        <span class="t-kw">else</span> <span class="t-kw">if</span> (recalcularMapa && <span class="t-kw">this</span>.imagenCargada) <span class="t-kw">this</span>.procesarMapaSDF();
+        <span class="t-kw">this</span>.renderizar();
+    }
+
+    <span class="t-func">cargarImagen</span>(src) {
+        <span class="t-kw">this</span>.imagenCargada = <span class="t-bool">false</span>;
+        <span class="t-kw">this</span>.imagenObj.onload = () => { <span class="t-kw">this</span>.imagenCargada = <span class="t-bool">true</span>; <span class="t-kw">this</span>.procesarMapaSDF(); <span class="t-kw">this</span>.renderizar(); };
+        <span class="t-kw">this</span>.imagenObj.src = src;
+    }
+
+    <span class="t-func">procesarMapaSDF</span>() {
+        <span class="t-kw">if</span>(!<span class="t-kw">this</span>.imagenCargada) <span class="t-kw">return</span>;
+        <span class="t-kw">const</span> dimension = <span class="t-kw">this</span>.config.exclusionRadio * <span class="t-num">2</span>;
+        <span class="t-kw">const</span> ratio = <span class="t-kw">this</span>.imagenObj.width / <span class="t-kw">this</span>.imagenObj.height;
+        <span class="t-kw">let</span> imgW = dimension, imgH = dimension;
+        <span class="t-kw">if</span>(ratio > <span class="t-num">1</span>) imgH = dimension / ratio; <span class="t-kw">else</span> imgW = dimension * ratio;
+        <span class="t-kw">this</span>.imgW = Math.floor(imgW); <span class="t-kw">this</span>.imgH = Math.floor(imgH);
+
+        <span class="t-kw">const</span> offCanvas = document.createElement(<span class="t-str">'canvas'</span>);
+        offCanvas.width = <span class="t-kw">this</span>.imgW; offCanvas.height = <span class="t-kw">this</span>.imgH;
+        <span class="t-kw">const</span> offCtx = offCanvas.getContext(<span class="t-str">'2d'</span>, { willReadFrequently: <span class="t-bool">true</span> });
+        offCtx.drawImage(<span class="t-kw">this</span>.imagenObj, <span class="t-num">0</span>, <span class="t-num">0</span>, <span class="t-kw">this</span>.imgW, <span class="t-kw">this</span>.imgH);
+        <span class="t-kw">const</span> data = offCtx.getImageData(<span class="t-num">0</span>, <span class="t-num">0</span>, <span class="t-kw">this</span>.imgW, <span class="t-kw">this</span>.imgH).data;
+        <span class="t-kw">this</span>.mapaSegmentos = [];
+
+        <span class="t-kw">for</span> (<span class="t-kw">let</span> y = <span class="t-num">0</span>; y < <span class="t-kw">this</span>.imgH; y++) {
+            <span class="t-kw">let</span> segmentosFila = [], enSolido = <span class="t-bool">false</span>, inicioX = <span class="t-num">0</span>;
+            <span class="t-kw">for</span> (<span class="t-kw">let</span> x = <span class="t-num">0</span>; x < <span class="t-kw">this</span>.imgW; x++) {
+                <span class="t-kw">const</span> esOpaco = data[(y * <span class="t-kw">this</span>.imgW + x) * <span class="t-num">4</span> + <span class="t-num">3</span>] > <span class="t-num">15</span>; 
+                <span class="t-kw">if</span> (esOpaco && !enSolido) { enSolido = <span class="t-bool">true</span>; inicioX = x; } 
+                <span class="t-kw">else</span> <span class="t-kw">if</span> (!esOpaco && enSolido) { enSolido = <span class="t-bool">false</span>; segmentosFila.push({ left: inicioX, right: x }); }
+            }
+            <span class="t-kw">if</span> (enSolido) segmentosFila.push({ left: inicioX, right: <span class="t-kw">this</span>.imgW });
+            <span class="t-kw">this</span>.mapaSegmentos[y] = segmentosFila.length > <span class="t-num">0</span> ? segmentosFila : <span class="t-kw">null</span>;
+        }
+    }
+
+    <span class="t-func">ajustarResolucion</span>() {
+        <span class="t-kw">const</span> dpr = window.devicePixelRatio || <span class="t-num">1</span>;
+        <span class="t-kw">const</span> rect = <span class="t-kw">this</span>.canvas.parentElement.getBoundingClientRect();
+        <span class="t-kw">this</span>.canvas.width = rect.width * dpr; <span class="t-kw">this</span>.canvas.height = rect.height * dpr;
+        <span class="t-kw">this</span>.ctx.scale(dpr, dpr);
+        <span class="t-kw">this</span>.width = rect.width; <span class="t-kw">this</span>.height = rect.height;
+        <span class="t-kw">this</span>.anchoMaximo = <span class="t-kw">this</span>.width - (<span class="t-kw">this</span>.config.paddingX * <span class="t-num">2</span>);
+        <span class="t-kw">this</span>.prepararTexto(); <span class="t-kw">this</span>.renderizar();
+    }
+
+    <span class="t-func">renderizar</span>() {
+        <span class="t-kw">this</span>.ctx.fillStyle = <span class="t-kw">this</span>.config.bgCanvas || <span class="t-str">'#fff'</span>;
+        <span class="t-kw">this</span>.ctx.fillRect(<span class="t-num">0</span>, <span class="t-num">0</span>, <span class="t-kw">this</span>.width, <span class="t-kw">this</span>.height);
+        
+        <span class="t-kw">if</span>(<span class="t-kw">this</span>.config.tipoForma === <span class="t-str">'circulo'</span>) {
+            <span class="t-kw">this</span>.ctx.beginPath();
+            <span class="t-kw">this</span>.ctx.arc(<span class="t-kw">this</span>.config.exX, <span class="t-kw">this</span>.config.exY, <span class="t-kw">this</span>.config.exclusionRadio, <span class="t-num">0</span>, Math.PI * <span class="t-num">2</span>);
+            <span class="t-kw">this</span>.ctx.fillStyle = <span class="t-kw">this</span>.config.colorExclusion || <span class="t-str">'#3b82f6'</span>;
+            <span class="t-kw">this</span>.ctx.fill();
+        } <span class="t-kw">else</span> <span class="t-kw">if</span> (<span class="t-kw">this</span>.imagenCargada) {
+            <span class="t-kw">this</span>.ctx.drawImage(<span class="t-kw">this</span>.imagenObj, <span class="t-kw">this</span>.config.exX - (<span class="t-kw">this</span>.imgW/<span class="t-num">2</span>), <span class="t-kw">this</span>.config.exY - (<span class="t-kw">this</span>.imgH/<span class="t-num">2</span>), <span class="t-kw">this</span>.imgW, <span class="t-kw">this</span>.imgH);
+        }
+
+        <span class="t-kw">this</span>.ctx.font = <span class="t-kw">this</span>.config.fuente; <span class="t-kw">this</span>.ctx.fillStyle = <span class="t-kw">this</span>.config.colorTexto; <span class="t-kw">this</span>.ctx.textBaseline = <span class="t-str">'middle'</span>;
+
+        <span class="t-kw">let</span> cursorX = <span class="t-kw">this</span>.config.paddingX, cursorY = <span class="t-kw">this</span>.config.paddingY;
+        <span class="t-kw">const</span> rep = <span class="t-kw">this</span>.config.margenExclusion;
+        <span class="t-kw">let</span> chunk = [], chunkStartX = cursorX;
+
+        <span class="t-kw">const</span> flushChunk = (endX, justificar) => {
+            <span class="t-kw">if</span> (chunk.length === <span class="t-num">0</span>) <span class="t-kw">return</span>;
+            <span class="t-kw">let</span> totalWordsWidth = chunk.reduce((sum, p) => sum + p.ancho, <span class="t-num">0</span>);
+            <span class="t-kw">let</span> numEspacios = chunk.length - <span class="t-num">1</span>, espacioExtra = <span class="t-kw">this</span>.anchoEspacio;
+            
+            <span class="t-kw">if</span> (<span class="t-kw">this</span>.config.justificado && justificar && numEspacios > <span class="t-num">0</span>) {
+                <span class="t-kw">let</span> calcEspacio = (endX - chunkStartX - totalWordsWidth) / numEspacios;
+                <span class="t-kw">if</span> (calcEspacio <= <span class="t-kw">this</span>.anchoEspacio * <span class="t-num">4</span>) espacioExtra = calcEspacio; 
+            }
+            <span class="t-kw">let</span> drawX = chunkStartX;
+            <span class="t-kw">for</span> (<span class="t-kw">let</span> p <span class="t-kw">of</span> chunk) { <span class="t-kw">this</span>.ctx.fillText(p.texto, drawX, cursorY); drawX += p.ancho + espacioExtra; }
+            chunk = []; 
+        };
+
+        <span class="t-kw">for</span> (<span class="t-kw">let</span> i = <span class="t-num">0</span>; i < <span class="t-kw">this</span>.palabras.length; i++) {
+            <span class="t-kw">const</span> objPalabra = <span class="t-kw">this</span>.palabras[i];
+            <span class="t-kw">while</span> (<span class="t-kw">true</span>) {
+                <span class="t-kw">if</span> (cursorX + objPalabra.ancho > <span class="t-kw">this</span>.width - <span class="t-kw">this</span>.config.paddingX) {
+                    flushChunk(<span class="t-kw">this</span>.width - <span class="t-kw">this</span>.config.paddingX, <span class="t-bool">true</span>); 
+                    cursorX = <span class="t-kw">this</span>.config.paddingX; cursorY += <span class="t-kw">this</span>.config.altoLinea; chunkStartX = cursorX;
+                }
+                <span class="t-kw">if</span> (cursorY > <span class="t-kw">this</span>.height + <span class="t-kw">this</span>.config.altoLinea) <span class="t-kw">return</span>; 
+
+                <span class="t-kw">let</span> huboColision = <span class="t-bool">false</span>, colBordeIzq = <span class="t-num">0</span>, colBordeDer = <span class="t-num">0</span>;
+
+                <span class="t-kw">if</span> (<span class="t-kw">this</span>.config.tipoForma === <span class="t-str">'circulo'</span>) {
+                    <span class="t-kw">let</span> distY = cursorY - <span class="t-kw">this</span>.config.exY, radioEfectivo = <span class="t-kw">this</span>.config.exclusionRadio + rep;
+                    <span class="t-kw">if</span> (Math.abs(distY) < radioEfectivo) {
+                        <span class="t-kw">let</span> distX = Math.sqrt((radioEfectivo ** <span class="t-num">2</span>) - (distY ** <span class="t-num">2</span>));
+                        <span class="t-kw">let</span> bIzq = <span class="t-kw">this</span>.config.exX - distX, bDer = <span class="t-kw">this</span>.config.exX + distX;
+                        <span class="t-kw">if</span> (cursorX + objPalabra.ancho > bIzq && cursorX < bDer) { huboColision = <span class="t-bool">true</span>; colBordeIzq = bIzq; colBordeDer = bDer; }
+                    }
+                } <span class="t-kw">else</span> <span class="t-kw">if</span> (<span class="t-kw">this</span>.imagenCargada) {
+                    <span class="t-kw">let</span> localY = Math.floor(cursorY - (<span class="t-kw">this</span>.config.exY - (<span class="t-kw">this</span>.imgH/<span class="t-num">2</span>)));
+                    <span class="t-kw">if</span>(localY >= <span class="t-num">0</span> && localY < <span class="t-kw">this</span>.imgH && <span class="t-kw">this</span>.mapaSegmentos[localY]) {
+                        <span class="t-kw">let</span> imgLeftEdge = <span class="t-kw">this</span>.config.exX - (<span class="t-kw">this</span>.imgW/<span class="t-num">2</span>);
+                        <span class="t-kw">for</span>(<span class="t-kw">let</span> seg <span class="t-kw">of</span> <span class="t-kw">this</span>.mapaSegmentos[localY]) {
+                            <span class="t-kw">let</span> bIzq = imgLeftEdge + seg.left - rep, bDer = imgLeftEdge + seg.right + rep;
+                            <span class="t-kw">if</span> (cursorX + objPalabra.ancho > bIzq && cursorX < bDer) { huboColision = <span class="t-bool">true</span>; colBordeIzq = bIzq; colBordeDer = bDer; <span class="t-kw">break</span>; }
+                        }
+                    }
+                }
+
+                <span class="t-kw">if</span> (huboColision) {
+                    flushChunk(colBordeIzq, <span class="t-bool">true</span>); 
+                    cursorX = colBordeDer; chunkStartX = cursorX; 
+                    <span class="t-kw">continue</span>; 
+                }
+                chunk.push(objPalabra); cursorX += objPalabra.ancho + <span class="t-kw">this</span>.anchoEspacio; <span class="t-kw">break</span>;
+            }
+        }
+        flushChunk(<span class="t-kw">this</span>.width - <span class="t-kw">this</span>.config.paddingX, <span class="t-bool">false</span>);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3><span class="step-num">3</span> Inicialización (Tu Configuración)</h3>
+            <p>Pega el código que generaste en el panel de control de arriba justo debajo de la clase.</p>
+            <div class="code-box">
+<pre><code><span class="t-com">// Usa el botón "Copiar Configuración" del panel de arriba para obtener este bloque adaptado a tu diseño.</span>
+<span class="t-kw">const</span> motor = <span class="t-kw">new</span> <span class="t-func">EditorialCanvasV3</span>(<span class="t-str">'mi-lienzo'</span>, { ... });</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // LIBRERÍA CORE INSERTADA PARA QUE FUNCIONE LA DEMO EN ESTE ARCHIVO
+        class EditorialCanvasV3 {
+            constructor(canvasId, opciones) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { alpha: false }); 
+                this.config = { ...opciones };
+                this.palabras = [];
+                this.wordCache = new Map();
+                this.imagenCargada = false;
+                this.imagenObj = new Image();
+                this.mapaSegmentos = []; 
+                this.prepararTexto();
+                if(this.config.imgSrc) this.cargarImagen(this.config.imgSrc);
+                this.resizeTimer = null;
+                window.addEventListener('resize', () => { clearTimeout(this.resizeTimer); this.resizeTimer = setTimeout(() => this.ajustarResolucion(), 100); });
+                this.ajustarResolucion();
+            }
+            prepararTexto() {
+                this.ctx.font = this.config.fuente;
+                const rawWords = this.config.texto.split(/\s+/).filter(p => p.length > 0);
+                this.palabras = [];
+                rawWords.forEach(word => {
+                    if (!this.wordCache.has(word)) this.wordCache.set(word, this.ctx.measureText(word).width);
+                    this.palabras.push({ texto: word, ancho: this.wordCache.get(word) });
+                });
+                this.anchoEspacio = this.ctx.measureText(" ").width;
+            }
+            actualizarConfig(nuevasOpciones) {
+                let recargarImg = nuevasOpciones.imgSrc && nuevasOpciones.imgSrc !== this.config.imgSrc;
+                let recalcularMapa = recargarImg || nuevasOpciones.exclusionRadio !== undefined;
+                let recalcularTexto = nuevasOpciones.texto !== undefined || nuevasOpciones.fuente !== undefined;
+                this.config = { ...this.config, ...nuevasOpciones };
+                if (recalcularTexto) this.prepararTexto();
+                if (recargarImg) this.cargarImagen(this.config.imgSrc);
+                else if (recalcularMapa && this.imagenCargada) this.procesarMapaSDF();
+                this.renderizar();
+            }
+            cargarImagen(src) {
+                this.imagenCargada = false;
+                this.imagenObj.onload = () => { this.imagenCargada = true; this.procesarMapaSDF(); this.renderizar(); };
+                this.imagenObj.src = src;
+            }
+            procesarMapaSDF() {
+                if(!this.imagenCargada) return;
+                const dimension = this.config.exclusionRadio * 2;
+                const ratio = this.imagenObj.width / this.imagenObj.height;
+                let imgW = dimension, imgH = dimension;
+                if(ratio > 1) imgH = dimension / ratio; else imgW = dimension * ratio;
+                this.imgW = Math.floor(imgW); this.imgH = Math.floor(imgH);
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = this.imgW; offCanvas.height = this.imgH;
+                const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+                offCtx.drawImage(this.imagenObj, 0, 0, this.imgW, this.imgH);
+                const data = offCtx.getImageData(0, 0, this.imgW, this.imgH).data;
+                this.mapaSegmentos = [];
+                for (let y = 0; y < this.imgH; y++) {
+                    let segmentosFila = [], enSolido = false, inicioX = 0;
+                    for (let x = 0; x < this.imgW; x++) {
+                        const esOpaco = data[(y * this.imgW + x) * 4 + 3] > 15; 
+                        if (esOpaco && !enSolido) { enSolido = true; inicioX = x; } 
+                        else if (!esOpaco && enSolido) { enSolido = false; segmentosFila.push({ left: inicioX, right: x }); }
+                    }
+                    if (enSolido) segmentosFila.push({ left: inicioX, right: this.imgW });
+                    this.mapaSegmentos[y] = segmentosFila.length > 0 ? segmentosFila : null;
+                }
+            }
+            ajustarResolucion() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width * dpr; this.canvas.height = rect.height * dpr;
+                this.ctx.scale(dpr, dpr);
+                this.width = rect.width; this.height = rect.height;
+                this.anchoMaximo = this.width - (this.config.paddingX * 2);
+                this.prepararTexto(); this.renderizar();
+            }
+            renderizar() {
+                this.ctx.fillStyle = this.config.bgCanvas || '#fff';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                if(this.config.tipoForma === 'circulo') {
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.config.exX, this.config.exY, this.config.exclusionRadio, 0, Math.PI * 2);
+                    this.ctx.fillStyle = this.config.colorExclusion || '#3b82f6';
+                    this.ctx.fill();
+                } else if (this.imagenCargada) {
+                    this.ctx.drawImage(this.imagenObj, this.config.exX - (this.imgW/2), this.config.exY - (this.imgH/2), this.imgW, this.imgH);
+                }
+                this.ctx.font = this.config.fuente; this.ctx.fillStyle = this.config.colorTexto; this.ctx.textBaseline = 'middle';
+                let cursorX = this.config.paddingX, cursorY = this.config.paddingY;
+                const rep = this.config.margenExclusion;
+                let chunk = [], chunkStartX = cursorX;
+                const flushChunk = (endX, justificar) => {
+                    if (chunk.length === 0) return;
+                    let totalWordsWidth = chunk.reduce((sum, p) => sum + p.ancho, 0);
+                    let numEspacios = chunk.length - 1, espacioExtra = this.anchoEspacio;
+                    if (this.config.justificado && justificar && numEspacios > 0) {
+                        let calcEspacio = (endX - chunkStartX - totalWordsWidth) / numEspacios;
+                        if (calcEspacio <= this.anchoEspacio * 4) espacioExtra = calcEspacio; 
+                    }
+                    let drawX = chunkStartX;
+                    for (let p of chunk) { this.ctx.fillText(p.texto, drawX, cursorY); drawX += p.ancho + espacioExtra; }
+                    chunk = []; 
+                };
+                for (let i = 0; i < this.palabras.length; i++) {
+                    const objPalabra = this.palabras[i];
+                    while (true) {
+                        if (cursorX + objPalabra.ancho > this.width - this.config.paddingX) {
+                            flushChunk(this.width - this.config.paddingX, true); 
+                            cursorX = this.config.paddingX; cursorY += this.config.altoLinea; chunkStartX = cursorX;
+                        }
+                        if (cursorY > this.height + this.config.altoLinea) return; 
+                        let huboColision = false, colBordeIzq = 0, colBordeDer = 0;
+                        if (this.config.tipoForma === 'circulo') {
+                            let distY = cursorY - this.config.exY, radioEfectivo = this.config.exclusionRadio + rep;
+                            if (Math.abs(distY) < radioEfectivo) {
+                                let distX = Math.sqrt((radioEfectivo ** 2) - (distY ** 2));
+                                let bIzq = this.config.exX - distX, bDer = this.config.exX + distX;
+                                if (cursorX + objPalabra.ancho > bIzq && cursorX < bDer) { huboColision = true; colBordeIzq = bIzq; colBordeDer = bDer; }
+                            }
+                        } else if (this.imagenCargada) {
+                            let localY = Math.floor(cursorY - (this.config.exY - (this.imgH/2)));
+                            if(localY >= 0 && localY < this.imgH && this.mapaSegmentos[localY]) {
+                                let imgLeftEdge = this.config.exX - (this.imgW/2);
+                                for(let seg of this.mapaSegmentos[localY]) {
+                                    let bIzq = imgLeftEdge + seg.left - rep, bDer = imgLeftEdge + seg.right + rep;
+                                    if (cursorX + objPalabra.ancho > bIzq && cursorX < bDer) { huboColision = true; colBordeIzq = bIzq; colBordeDer = bDer; break; }
+                                }
+                            }
+                        }
+                        if (huboColision) {
+                            flushChunk(colBordeIzq, true); 
+                            cursorX = colBordeDer; chunkStartX = cursorX; 
+                            continue; 
+                        }
+                        chunk.push(objPalabra); cursorX += objPalabra.ancho + this.anchoEspacio; break;
+                    }
+                }
+                flushChunk(this.width - this.config.paddingX, false);
+            }
+        }
+
+        // ==========================================
+        // GENERADOR DE DEMOS VISUALES (Dona en Base64)
+        // ==========================================
+        function generarDonaPNG() {
+            const c = document.createElement('canvas'); c.width = 400; c.height = 400;
+            const ctx = c.getContext('2d');
+            ctx.beginPath(); ctx.arc(200, 200, 180, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.9)'; ctx.fill();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath(); ctx.arc(200, 200, 80, 0, Math.PI * 2); ctx.fill();
+            return c.toDataURL('image/png');
+        }
+        const imgDona = generarDonaPNG();
+
+        // ==========================================
+        // ESTADO DE LA APP Y UI
+        // ==========================================
+        let estadoApp = {
+            modo: 'arrastrar', 
+            arrastrando: false, 
+            animId: null, 
+            velX: 5, velY: 3,
+            imagenActual: imgDona
+        };
+
+        const motor = new EditorialCanvasV3('lienzo-demo', {
+            tipoForma: 'dona', imgSrc: imgDona,
+            texto: document.getElementById('ctrl-texto').value,
+            exX: 450, exY: 300,
+            exclusionRadio: parseInt(document.getElementById('ctrl-r').value),
+            margenExclusion: parseInt(document.getElementById('ctrl-m').value),
+            altoLinea: parseInt(document.getElementById('ctrl-l').value),
+            paddingX: parseInt(document.getElementById('ctrl-pad').value),
+            paddingY: parseInt(document.getElementById('ctrl-pad').value),
+            fuente: "17px system-ui, sans-serif",
+            colorTexto: document.getElementById('ctrl-color-txt').value,
+            colorExclusion: document.getElementById('ctrl-color-obj').value,
+            bgCanvas: document.getElementById('ctrl-color-bg').value,
+            justificado: true
+        });
+
+        // Generador de Código
+        function generarCodigoSalida() {
+            const cfg = motor.config;
+            const strCorto = cfg.texto.substring(0, 50) + "...";
+            const isImg = cfg.tipoForma !== 'circulo';
+            const domCodigo = document.getElementById('codigo-salida');
+            
+            let codigo = `<span class="t-kw">const</span> motor = <span class="t-kw">new</span> <span class="t-func">EditorialCanvasV3</span>(<span class="t-str">'mi-lienzo'</span>, {
+    tipoForma: <span class="t-str">'${cfg.tipoForma === 'circulo' ? 'circulo' : 'imagen'}'</span>, ${isImg ? `\n    imgSrc: <span class="t-str">'assets/tu-imagen.png'</span>,` : ''}
+    texto: <span class="t-str">"${strCorto}"</span>,
+    exX: <span class="t-num">${Math.round(cfg.exX)}</span>,
+    exY: <span class="t-num">${Math.round(cfg.exY)}</span>,
+    exclusionRadio: <span class="t-num">${cfg.exclusionRadio}</span>,
+    margenExclusion: <span class="t-num">${cfg.margenExclusion}</span>,
+    altoLinea: <span class="t-num">${cfg.altoLinea}</span>,
+    paddingX: <span class="t-num">${cfg.paddingX}</span>,
+    paddingY: <span class="t-num">${cfg.paddingY}</span>,
+    justificado: <span class="t-bool">${cfg.justificado}</span>,
+    colorTexto: <span class="t-str">"${cfg.colorTexto}"</span>,
+    bgCanvas: <span class="t-str">"${cfg.bgCanvas}"</span>${!isImg ? `,\n    colorExclusion: <span class="t-str">"${cfg.colorExclusion}"</span>` : ''}
+});`;
+
+            if (estadoApp.modo === 'seguir') {
+                codigo += `\n\n<span class="t-com">// Lógica para "Seguir al Ratón"</span>\n<span class="t-kw">const</span> canvas = document.getElementById(<span class="t-str">'mi-lienzo'</span>);\ncanvas.addEventListener(<span class="t-str">'mousemove'</span>, (e) => {\n    <span class="t-kw">const</span> rect = canvas.getBoundingClientRect();\n    motor.<span class="t-func">actualizarConfig</span>({\n        exX: e.clientX - rect.left,\n        exY: e.clientY - rect.top\n    });\n});`;
+            } else if (estadoApp.modo === 'auto') {
+                codigo += `\n\n<span class="t-com">// Lógica de Animación (Rebote)</span>\n<span class="t-kw">let</span> vx = <span class="t-num">5</span>, vy = <span class="t-num">3</span>;\n<span class="t-kw">function</span> <span class="t-func">animar</span>() {\n    <span class="t-kw">let</span> nx = motor.config.exX + vx;\n    <span class="t-kw">let</span> ny = motor.config.exY + vy;\n    <span class="t-kw">if</span>(nx + motor.config.exclusionRadio > motor.width || nx - motor.config.exclusionRadio < <span class="t-num">0</span>) vx *= -<span class="t-num">1</span>;\n    <span class="t-kw">if</span>(ny + motor.config.exclusionRadio > motor.height || ny - motor.config.exclusionRadio < <span class="t-num">0</span>) vy *= -<span class="t-num">1</span>;\n    motor.<span class="t-func">actualizarConfig</span>({ exX: nx, exY: ny });\n    <span class="t-func">requestAnimationFrame</span>(animar);\n}\n<span class="t-func">animar</span>();`;
+            }
+
+            domCodigo.innerHTML = codigo;
+        }
+
+        // Eventos Controles Sliders/Colors
+        const vincular = (id, clave, type = 'int') => {
+            document.getElementById(`ctrl-${id}`).addEventListener('input', e => {
+                let val = type === 'int' ? parseInt(e.target.value) : e.target.value;
+                if(type === 'int') document.getElementById(`val-${id}`).innerText = val + 'px';
+                
+                requestAnimationFrame(() => {
+                    if (clave === 'paddingXY') motor.actualizarConfig({ paddingX: val, paddingY: val });
+                    else motor.actualizarConfig({ [clave]: val });
+                    generarCodigoSalida();
+                });
+            });
+        };
+        vincular('r', 'exclusionRadio');
+        vincular('m', 'margenExclusion');
+        vincular('l', 'altoLinea');
+        vincular('pad', 'paddingXY');
+        vincular('color-txt', 'colorTexto', 'str');
+        vincular('color-obj', 'colorExclusion', 'str');
+        vincular('color-bg', 'bgCanvas', 'str');
+        vincular('texto', 'texto', 'str');
+
+        // Toggle Justificar
+        const btnJustify = document.getElementById('btn-justify');
+        btnJustify.addEventListener('click', () => {
+            motor.config.justificado = !motor.config.justificado;
+            btnJustify.classList.toggle('active');
+            motor.renderizar();
+            generarCodigoSalida();
+        });
+
+        // Tabs de Forma
+        const btnFormas = document.querySelectorAll('#tabs-forma .tab-btn');
+        btnFormas.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                btnFormas.forEach(b => b.classList.remove('activo')); e.target.classList.add('activo');
+                let forma = e.target.dataset.forma;
+                
+                document.getElementById('panel-upload').style.display = forma === 'imagen' ? 'block' : 'none';
+                document.getElementById('wrapper-color-obj').style.opacity = forma === 'circulo' ? '1' : '0.3';
+                
+                if (forma === 'circulo') motor.actualizarConfig({ tipoForma: 'circulo' });
+                else if (forma === 'dona') motor.actualizarConfig({ tipoForma: 'imagen', imgSrc: imgDona });
+                else motor.actualizarConfig({ tipoForma: 'imagen', imgSrc: estadoApp.imagenActual });
+                
+                generarCodigoSalida();
+            });
+        });
+
+        // Subida de Archivos
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    estadoApp.imagenActual = event.target.result;
+                    motor.actualizarConfig({ imgSrc: estadoApp.imagenActual });
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Tabs de Modo Físico
+        const btnModos = document.querySelectorAll('#tabs-modo .tab-btn');
+        btnModos.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                btnModos.forEach(b => b.classList.remove('activo')); e.target.classList.add('activo');
+                estadoApp.modo = e.target.dataset.modo;
+                document.getElementById('wrapper').dataset.modo = estadoApp.modo;
+                
+                if(estadoApp.animId) cancelAnimationFrame(estadoApp.animId);
+                if (estadoApp.modo === 'auto') animarBucle();
+                generarCodigoSalida();
+            });
+        });
+
+        // Bucle Animación
+        function animarBucle() {
+            if (estadoApp.modo !== 'auto') return;
+            let nx = motor.config.exX + estadoApp.velX; let ny = motor.config.exY + estadoApp.velY;
+            if (nx + motor.config.exclusionRadio > motor.width || nx - motor.config.exclusionRadio < 0) estadoApp.velX *= -1;
+            if (ny + motor.config.exclusionRadio > motor.height || ny - motor.config.exclusionRadio < 0) estadoApp.velY *= -1;
+            motor.actualizarConfig({ exX: nx, exY: ny });
+            estadoApp.animId = requestAnimationFrame(animarBucle);
+        }
+
+        // Interacción Ratón
+        const wrapper = document.getElementById('wrapper');
+        wrapper.addEventListener('mousedown', () => { if(estadoApp.modo === 'arrastrar') estadoApp.arrastrando = true; });
+        window.addEventListener('mouseup', () => estadoApp.arrastrando = false);
+        wrapper.addEventListener('mousemove', (e) => {
+            if (estadoApp.modo === 'auto') return; 
+            if (estadoApp.modo === 'arrastrar' && !estadoApp.arrastrando) return;
+            const rect = motor.canvas.getBoundingClientRect();
+            motor.actualizarConfig({ exX: e.clientX - rect.left, exY: e.clientY - rect.top });
+        });
+
+        // Monitor FPS
+        let frames = 0, prevTime = performance.now();
+        const fpsMonitor = document.getElementById('fps-monitor');
+        function medirFPS(time) {
+            frames++;
+            if (time - prevTime >= 1000) {
+                fpsMonitor.innerText = `${frames} FPS`;
+                fpsMonitor.style.color = frames > 55 ? 'var(--success)' : (frames > 30 ? 'var(--warning)' : '#ef4444');
+                frames = 0; prevTime = time;
+            }
+            requestAnimationFrame(medirFPS);
+        }
+        requestAnimationFrame(medirFPS);
+
+        // Copiar Portapapeles
+        const setupCopy = (btnId, targetId) => {
+            document.getElementById(btnId).addEventListener('click', (e) => {
+                navigator.clipboard.writeText(document.getElementById(targetId).innerText).then(() => {
+                    let old = e.target.innerText; e.target.innerText = "¡Copiado!"; e.target.style.background = "var(--success)";
+                    setTimeout(() => { e.target.innerText = old; e.target.style.background = "var(--accent)"; }, 2000);
+                });
+            });
+        };
+        setupCopy('btn-copiar-cfg', 'codigo-salida');
+        
+        window.copiarLibreria = function(btn) {
+            navigator.clipboard.writeText(document.getElementById('codigo-libreria').innerText).then(() => {
+                btn.innerText = "¡Copiado!"; btn.style.background = "var(--success)";
+                setTimeout(() => { btn.innerText = "Copiar Core"; btn.style.background = "var(--accent)"; }, 2000);
+            });
+        }
+
+        // Init Final
+        generarCodigoSalida();
+    </script>
+</body>
+</html>
